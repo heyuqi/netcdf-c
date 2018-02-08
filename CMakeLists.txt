@@ -264,6 +264,38 @@ IF(${CMAKE_SYSTEM_NAME} EQUAL "Darwin")
   SET(CMAKE_OSX_ARCHITECTURES i386;x86_64)
 ENDIF(${CMAKE_SYSTEM_NAME} EQUAL "Darwin")
 
+# Macro for replacing '/MD' with '/MT'.
+# Used only on Windows, /MD tells VS to use the shared
+# CRT libs, MT tells VS to use the static CRT libs.
+#
+# Taken From:
+#   http://www.cmake.org/Wiki/CMake_FAQ#How_can_I_build_my_MSVC_application_with_a_static_runtime.3F
+#
+MACRO(specify_static_crt_flag)
+  SET(vars
+    CMAKE_C_FLAGS
+    CMAKE_C_FLAGS_DEBUG
+    CMAKE_C_FLAGS_MINSIZEREL
+    CMAKE_C_FLAGS_RELEASE
+    CMAKE_C_FLAGS_RELWITHDEBINFO
+    CMAKE_CXX_FLAGS
+    CMAKE_CXX_FLAGS_DEBUG
+    CMAKE_CXX_FLAGS_RELEASE
+    CMAKE_CXX_FLAGS_MINSIZEREL
+    CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+
+  FOREACH(flag_var ${vars})
+    IF(${flag_var} MATCHES "/MD")
+      STRING(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+    ENDIF()
+  ENDFOREACH()
+
+  FOREACH(flag_var ${vars})
+    MESSAGE(STATUS " '${flag_var}': ${${flag_var}}")
+  ENDFOREACH()
+  MESSAGE(STATUS "")
+ENDMACRO()
+
 # Option to use Static Runtimes in MSVC
 IF(MSVC)
   OPTION(NC_USE_STATIC_CRT "Use static CRT Libraries ('\\MT')." OFF)
@@ -1180,34 +1212,7 @@ MACRO(add_sh_test prefix F)
   ENDIF()
 ENDMACRO()
 
-# Macro for replacing '/MD' with '/MT'.
-# Used only on Windows, /MD tells VS to use the shared
-# CRT libs, MT tells VS to use the static CRT libs.
-#
-# Taken From:
-#   http://www.cmake.org/Wiki/CMake_FAQ#How_can_I_build_my_MSVC_application_with_a_static_runtime.3F
-#
-MACRO(specify_static_crt_flag)
-  SET(vars
-    CMAKE_C_FLAGS
-    CMAKE_C_FLAGS_DEBUG
-    CMAKE_C_FLAGS_MINSIZEREL
-    CMAKE_C_FLAGS_RELWITHDEBINFO
-    CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG
-    CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL
-    CMAKE_CXX_FLAGS_RELWITHDEBINFO)
 
-  FOREACH(flag_var ${vars})
-    IF(${flag_var} MATCHES "/MD")
-      STRING(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-    ENDIF()
-  ENDFOREACH()
-
-  FOREACH(flag_var ${vars})
-    MESSAGE(STATUS " '${flag_var}': ${${flag_var}}")
-  ENDFOREACH()
-  MESSAGE(STATUS "")
-ENDMACRO()
 
 # A function used to create autotools-style 'yes/no' definitions.
 # If a variable is set, it 'yes' is returned. Otherwise, 'no' is
